@@ -1,64 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #111111;
-  --bg-card: #161616;
-  --text-primary: #ededed;
-  --text-secondary: #a1a1aa;
-  --accent: #3b82f6;
-  --border: #27272a;
-}
-
 body {
-  font-family: var(--font-geist-sans);
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0a0a0a;
+  color: #ededed;
 }
 
 .btn-primary {
-  background-color: #3b82f6;
+  background: #3b82f6;
   color: white;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background-color: #2563eb;
+  padding: 14px 28px;
+  border-radius: 9999px;
+  font-weight: 600;
+  display: inline-block;
+  text-decoration: none;
 }
 
 .btn-secondary {
-  background-color: #1a1a1a;
+  background: #1a1a1a;
   border: 1px solid #27272a;
-  transition: all 0.2s ease;
-}
-
-.btn-secondary:hover {
-  background-color: #27272a;
-}
-
-.card {
-  background-color: #161616;
-  border: 1px solid #27272a;
-  border-radius: 20px;
-}
-
-.tag {
-  background-color: #1a1a1a;
-  border: 1px solid #27272a;
-  padding: 10px 20px;
+  padding: 14px 28px;
   border-radius: 9999px;
-  font-size: 15px;
-  transition: all 0.1s ease;
-}
-
-.tag.active {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
+  font-weight: 600;
+  display: inline-block;
+  text-decoration: none;
   color: white;
 }
 
-.chat-window {
-  background-color: #111111;
+.card {
+  background: #161616;
   border: 1px solid #27272a;
-  border-radius: 24px;
+  border-radius: 20px;
+  padding: 32px;
+}
+
+.tag {
+  background: #1a1a1a;
+  border: 1px solid #27272a;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  display: inline-block;
+  margin: 4px;
 }
