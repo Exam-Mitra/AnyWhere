@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const INTERESTS = [
   'Gaming', 'Music', 'Tech', 'Movies', 'Travel', 
@@ -22,6 +22,14 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [strangerName, setStrangerName] = useState('Stranger');
+  
+  // Video & Voice states
+  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
+  const [isVoiceOnly, setIsVoiceOnly] = useState(false);
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -35,16 +43,13 @@ export default function ChatPage() {
 
   const startMatching = () => {
     if (selectedInterests.length === 0) return;
-    
     setStep('matching');
     
-    // Simulate matching (2.5 seconds)
     setTimeout(() => {
       const names = ['Alex', 'Jordan', 'Taylor', 'Sam', 'Casey', 'Riley', 'Morgan'];
       setStrangerName(names[Math.floor(Math.random() * names.length)]);
       setStep('chat');
       
-      // Welcome message from stranger (or AI)
       setTimeout(() => {
         addMessage(`Hey! I saw you're into ${selectedInterests[0]}. What's up?`, false);
       }, 800);
@@ -68,13 +73,11 @@ export default function ChatPage() {
     const userInput = input.trim();
     setInput('');
 
-    // Simulate AI response (hybrid fallback)
     setIsTyping(true);
     
     setTimeout(() => {
       setIsTyping(false);
       
-      // Simple AI responses based on interests
       const responses = [
         `That's cool! I've been into ${selectedInterests[0]} a lot lately too.`,
         `Haha yeah, same. What got you started with that?`,
@@ -95,13 +98,82 @@ export default function ChatPage() {
     }
   };
 
+  // WebRTC Video Functions
+  const toggleVideo = async () => {
+    if (!isVideoEnabled) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true, 
+          audio: true 
+        });
+        
+        setLocalStream(stream);
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        
+        // Simulate remote video (for demo)
+        setTimeout(() => {
+          if (remoteVideoRef.current) {
+            // Use a second getUserMedia as a demo "remote" stream
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(remoteStream => {
+              if (remoteVideoRef.current) {
+                remoteVideoRef.current.srcObject = remoteStream;
+              }
+            });
+          }
+        }, 1200);
+
+        setIsVideoEnabled(true);
+        setIsVoiceOnly(false);
+      } catch (err) {
+        alert("Camera access denied. Please allow camera permissions.");
+      }
+    } else {
+      // Turn off video
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      setLocalStream(null);
+      setIsVideoEnabled(false);
+    }
+  };
+
+  const toggleVoiceOnly = async () => {
+    if (!isVoiceOnly) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: false, 
+          audio: true 
+        });
+        
+        setLocalStream(stream);
+        setIsVoiceOnly(true);
+        setIsVideoEnabled(false);
+      } catch (err) {
+        alert("Microphone access denied.");
+      }
+    } else {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      setLocalStream(null);
+      setIsVoiceOnly(false);
+    }
+  };
+
   const endChat = () => {
+    // Clean up media streams
+    if (localStream) {
+      localStream.getTracks().forEach(track => track.stop());
+    }
     window.location.href = '/';
   };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans flex flex-col">
-      {/* Chat Header */}
+      {/* Header */}
       <div className="border-b border-[#27272a] bg-[#111111] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-[#3b82f6] rounded-xl flex items-center justify-center">
@@ -178,69 +250,138 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* CHAT INTERFACE */}
+      {/* CHAT + VIDEO INTERFACE */}
       {step === 'chat' && (
-        <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full p-4">
-          {/* Chat Window */}
-          <div className="chat-window flex-1 flex flex-col overflow-hidden">
-            {/* Messages Area */}
-            <div className="flex-1 p-6 overflow-y-auto space-y-6" id="messages">
-              {messages.length === 0 && (
-                <div className="text-center text-[#71717a] mt-10">
-                  <p>You're now chatting with {strangerName}</p>
-                  <p className="text-sm mt-1">Say hi!</p>
+        <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full p-4 gap-4">
+          {/* Video Section */}
+          {(isVideoEnabled || isVoiceOnly) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Local Video */}
+              <div className="relative bg-[#111111] rounded-3xl overflow-hidden border border-[#27272a] aspect-video">
+                <video 
+                  ref={localVideoRef} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-3 left-3 bg-black/70 px-3 py-1 text-xs rounded-full">
+                  You
                 </div>
-              )}
+              </div>
 
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[75%] px-5 py-3 rounded-3xl text-[15px] leading-snug ${
-                    msg.isUser 
-                      ? 'bg-[#3b82f6] text-white rounded-br-md' 
-                      : 'bg-[#1a1a1a] text-[#ededed] rounded-bl-md'
-                  }`}>
-                    {msg.text}
-                    <div className={`text-[10px] mt-1.5 ${msg.isUser ? 'text-[#93c5fd]' : 'text-[#52525b]'}`}>
-                      {msg.timestamp}
+              {/* Remote Video */}
+              <div className="relative bg-[#111111] rounded-3xl overflow-hidden border border-[#27272a] aspect-video">
+                <video 
+                  ref={remoteVideoRef} 
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-3 left-3 bg-black/70 px-3 py-1 text-xs rounded-full">
+                  {strangerName}
+                </div>
+                {!isVideoEnabled && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-[#111111]">
+                    <div className="text-center">
+                      <div className="text-[#71717a]">Voice only mode</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
+            </div>
+          )}
 
-              {isTyping && (
-                <div className="flex justify-start">
-                  <div className="bg-[#1a1a1a] px-5 py-3 rounded-3xl rounded-bl-md">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce" />
-                      <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce delay-100" />
-                      <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce delay-200" />
+          {/* Chat + Controls */}
+          <div className="flex-1 flex flex-col md:flex-row gap-4">
+            {/* Chat Window */}
+            <div className="flex-1 chat-window flex flex-col overflow-hidden min-h-[420px]">
+              <div className="flex-1 p-6 overflow-y-auto space-y-6" id="messages">
+                {messages.length === 0 && (
+                  <div className="text-center text-[#71717a] mt-10">
+                    <p>You're now chatting with {strangerName}</p>
+                    <p className="text-sm mt-1">Say hi! Try enabling video</p>
+                  </div>
+                )}
+
+                {messages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[75%] px-5 py-3 rounded-3xl text-[15px] leading-snug ${
+                      msg.isUser 
+                        ? 'bg-[#3b82f6] text-white rounded-br-md' 
+                        : 'bg-[#1a1a1a] text-[#ededed] rounded-bl-md'
+                    }`}>
+                      {msg.text}
+                      <div className={`text-[10px] mt-1.5 ${msg.isUser ? 'text-[#93c5fd]' : 'text-[#52525b]'}`}>
+                        {msg.timestamp}
+                      </div>
                     </div>
                   </div>
+                ))}
+
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-[#1a1a1a] px-5 py-3 rounded-3xl rounded-bl-md">
+                      <div className="flex gap-1">
+                        <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce" />
+                        <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce delay-100" />
+                        <div className="w-1.5 h-1.5 bg-[#52525b] rounded-full animate-bounce delay-200" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="border-t border-[#27272a] p-4 bg-[#111111]">
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-[#1a1a1a] border border-[#27272a] rounded-2xl px-6 py-4 text-[15px] focus:outline-none focus:border-[#3b82f6]"
+                  />
+                  <button 
+                    onClick={sendMessage}
+                    disabled={!input.trim()}
+                    className="btn-primary px-8 rounded-2xl font-medium disabled:opacity-40"
+                  >
+                    Send
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Input Area */}
-            <div className="border-t border-[#27272a] p-4 bg-[#111111]">
-              <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="flex-1 bg-[#1a1a1a] border border-[#27272a] rounded-2xl px-6 py-4 text-[15px] focus:outline-none focus:border-[#3b82f6]"
-                />
-                <button 
-                  onClick={sendMessage}
-                  disabled={!input.trim()}
-                  className="btn-primary px-8 rounded-2xl font-medium disabled:opacity-40"
-                >
-                  Send
-                </button>
-              </div>
-              <div className="text-center text-[10px] text-[#52525b] mt-3">
-                AI fallback active • Conversation is private
+            {/* Video Controls Sidebar */}
+            <div className="w-full md:w-72 card p-5 flex flex-col gap-4">
+              <div className="text-sm font-medium text-[#a1a1aa] mb-1">Media controls</div>
+              
+              <button 
+                onClick={toggleVideo}
+                className={`w-full py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  isVideoEnabled 
+                    ? 'bg-[#ef4444] hover:bg-[#dc2626]' 
+                    : 'btn-primary'
+                }`}
+              >
+                {isVideoEnabled ? 'Stop Video' : 'Enable Video + Mic'}
+              </button>
+
+              <button 
+                onClick={toggleVoiceOnly}
+                className={`w-full py-3 rounded-2xl font-medium flex items-center justify-center gap-2 transition-all ${
+                  isVoiceOnly 
+                    ? 'bg-[#ef4444] hover:bg-[#dc2626]' 
+                    : 'btn-secondary'
+                }`}
+              >
+                {isVoiceOnly ? 'Stop Voice' : 'Voice Only'}
+              </button>
+
+              <div className="text-[10px] text-center text-[#52525b] pt-3 border-t border-[#27272a]">
+                WebRTC powered • Real-time
               </div>
             </div>
           </div>
