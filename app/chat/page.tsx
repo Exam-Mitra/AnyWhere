@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const INTERESTS = ['Gaming','Music','Tech','Movies','Travel','Fitness','Books','Art','Food','Photography','Programming','Startup','Sports','Fashion','Nature'];
 
 type Message = { id: number; text: string; isUser: boolean; timestamp: string };
 
-export default function Chat() {
+export default function PremiumChat() {
   const [step, setStep] = useState<'interests' | 'matching' | 'chat'>('interests');
   const [selected, setSelected] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -22,55 +23,60 @@ export default function Chat() {
   const localRef = useRef<HTMLVideoElement>(null);
   const remoteRef = useRef<HTMLVideoElement>(null);
 
-  const toggleInterest = (i: string) => {
-    if (selected.includes(i)) {
-      setSelected(selected.filter(x => x !== i));
+  const toggleInterest = (interest: string) => {
+    if (selected.includes(interest)) {
+      setSelected(selected.filter(i => i !== interest));
     } else if (selected.length < 4) {
-      setSelected([...selected, i]);
+      setSelected([...selected, interest]);
     }
   };
 
-  const start = () => {
+  const startMatching = () => {
     if (selected.length === 0) return;
     setStep('matching');
+    
     setTimeout(() => {
-      const names = ['Alex','Jordan','Taylor','Sam','Casey'];
-      setName(names[Math.floor(Math.random()*names.length)]);
+      const names = ['Alex', 'Jordan', 'Taylor', 'Sam', 'Casey'];
+      setName(names[Math.floor(Math.random() * names.length)]);
       setStep('chat');
-      setTimeout(() => addMsg(`Hey! I see you're into ${selected[0]}. What's up?`, false), 900);
+      setTimeout(() => {
+        addMessage(`Hey! I see you're into ${selected[0]}. What's up?`, false);
+      }, 800);
     }, 2200);
   };
 
-  const addMsg = (text: string, user: boolean) => {
-    setMessages(prev => [...prev, {
+  const addMessage = (text: string, isUser: boolean) => {
+    const newMsg: Message = {
       id: Date.now(),
       text,
-      isUser: user,
-      timestamp: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-    }]);
+      isUser,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, newMsg]);
   };
 
-  const send = () => {
+  const sendMessage = () => {
     if (!input.trim()) return;
-    addMsg(input.trim(), true);
+    addMessage(input.trim(), true);
     setInput('');
     setIsTyping(true);
+
     setTimeout(() => {
       setIsTyping(false);
       const replies = ["That's cool!", "Same here!", "Interesting!", "Haha yeah", "Nice!"];
-      addMsg(replies[Math.floor(Math.random()*replies.length)], false);
-    }, 1100);
+      addMessage(replies[Math.floor(Math.random() * replies.length)], false);
+    }, 1200);
   };
 
   const toggleVideo = async () => {
     if (!videoOn) {
       try {
-        const s = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+        const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setStream(s);
         if (localRef.current) localRef.current.srcObject = s;
         setVideoOn(true);
         setVoiceOn(false);
-      } catch { alert("Camera denied"); }
+      } catch { alert("Camera access denied"); }
     } else {
       stream?.getTracks().forEach(t => t.stop());
       setStream(null);
@@ -81,11 +87,11 @@ export default function Chat() {
   const toggleVoice = async () => {
     if (!voiceOn) {
       try {
-        const s = await navigator.mediaDevices.getUserMedia({video:false, audio:true});
+        const s = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
         setStream(s);
         setVoiceOn(true);
         setVideoOn(false);
-      } catch { alert("Mic denied"); }
+      } catch { alert("Microphone access denied"); }
     } else {
       stream?.getTracks().forEach(t => t.stop());
       setStream(null);
@@ -93,106 +99,156 @@ export default function Chat() {
     }
   };
 
-  const end = () => {
+  const endChat = () => {
     stream?.getTracks().forEach(t => t.stop());
     window.location.href = '/';
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header */}
-      <div className="border-b border-[#27272a] px-6 py-5 flex justify-between items-center">
+    <div className="min-h-screen bg-[#050505] text-white">
+      {/* Navbar */}
+      <nav className="border-b border-white/10 px-6 py-5 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#3b82f6] rounded-2xl flex items-center justify-center">
-            <span className="font-bold text-2xl">S</span>
+          <div className="w-9 h-9 bg-white rounded-2xl flex items-center justify-center">
+            <span className="text-black font-bold text-2xl">S</span>
           </div>
-          <div className="font-semibold text-3xl tracking-tighter">StrangerLine</div>
+          <span className="font-semibold text-3xl tracking-tighter">StrangerLine</span>
         </div>
         {step === 'chat' && (
           <div className="flex gap-3">
-            <button onClick={() => setShowReport(true)} className="px-4 py-2 text-sm border border-red-500/30 text-red-400 rounded-2xl">Report</button>
-            <button onClick={end} className="px-4 py-2 text-sm border border-[#27272a] rounded-2xl">End</button>
+            <button onClick={() => setShowReport(true)} className="px-5 py-2 text-sm border border-red-500/30 text-red-400 rounded-2xl">Report</button>
+            <button onClick={endChat} className="px-5 py-2 text-sm border border-white/20 rounded-2xl">End chat</button>
           </div>
         )}
-      </div>
+      </nav>
 
-      {/* Interest Selection */}
+      {/* INTEREST SELECTION */}
       {step === 'interests' && (
-        <div className="max-w-2xl mx-auto px-6 pt-16 text-center">
-          <h1 className="text-6xl font-semibold tracking-tighter mb-4">What are you into?</h1>
-          <p className="text-xl text-[#a1a1aa] mb-10">Select up to 4 interests</p>
+        <div className="max-w-3xl mx-auto px-6 pt-16 text-center">
+          <motion.h1 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="text-6xl font-semibold tracking-tighter mb-4"
+          >
+            What are you into?
+          </motion.h1>
+          <p className="text-xl text-white/70 mb-10">Select up to 4 interests</p>
 
-          <div className="flex flex-wrap gap-3 justify-center mb-10">
-            {INTERESTS.map(i => (
-              <button key={i} onClick={() => toggleInterest(i)}
-                className={`px-6 py-3 rounded-full border text-base transition-all ${selected.includes(i) ? 'bg-[#3b82f6] border-[#3b82f6]' : 'border-[#27272a] bg-[#1a1a1a]'}`}>
-                {i}
-              </button>
+          <div className="flex flex-wrap gap-3 justify-center mb-12">
+            {INTERESTS.map((interest, index) => (
+              <motion.button
+                key={interest}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => toggleInterest(interest)}
+                className={`px-6 py-3 rounded-full border text-base transition-all ${selected.includes(interest) 
+                  ? 'bg-white text-black border-white' 
+                  : 'border-white/20 bg-white/5 hover:bg-white/10'}`}
+              >
+                {interest}
+              </motion.button>
             ))}
           </div>
 
-          <button onClick={start} disabled={selected.length === 0}
-            className="bg-[#3b82f6] px-14 py-4 rounded-3xl text-xl disabled:opacity-50">
+          <button 
+            onClick={startMatching} 
+            disabled={selected.length === 0}
+            className="bg-white text-black px-14 py-4 rounded-3xl text-xl font-medium disabled:opacity-40"
+          >
             Find someone to talk to
           </button>
-          <p className="mt-4 text-sm text-[#71717a]">{selected.length}/4 selected</p>
+          <p className="text-sm text-white/50 mt-4">{selected.length}/4 selected</p>
         </div>
       )}
 
-      {/* Matching */}
+      {/* MATCHING SCREEN */}
       {step === 'matching' && (
-        <div className="flex items-center justify-center h-[60vh]">
+        <div className="flex items-center justify-center h-[70vh]">
           <div className="text-center">
-            <div className="w-6 h-6 border-2 border-[#3b82f6] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
-            <div className="text-3xl">Finding your match...</div>
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-8" />
+            <div className="text-4xl font-semibold tracking-tight">Finding your match...</div>
+            <div className="text-white/60 mt-3">This usually takes a few seconds</div>
           </div>
         </div>
       )}
 
-      {/* Chat */}
+      {/* CHAT INTERFACE */}
       {step === 'chat' && (
         <div className="max-w-6xl mx-auto p-6">
-          {(videoOn || voiceOn) && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div className="bg-[#111] border border-[#27272a] rounded-3xl overflow-hidden aspect-video">
-                <video ref={localRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+          {/* Video Section */}
+          <AnimatePresence>
+            {(videoOn || voiceOn) && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <motion.div 
+                  whileHover={{ scale: 1.01 }}
+                  className="bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden aspect-video relative"
+                >
+                  <video ref={localRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                  <div className="absolute bottom-4 left-4 bg-black/70 px-3 py-1 text-xs rounded-full">You</div>
+                </motion.div>
+                <motion.div 
+                  whileHover={{ scale: 1.01 }}
+                  className="bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden aspect-video relative"
+                >
+                  <video ref={remoteRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  <div className="absolute bottom-4 left-4 bg-black/70 px-3 py-1 text-xs rounded-full">{name}</div>
+                </motion.div>
               </div>
-              <div className="bg-[#111] border border-[#27272a] rounded-3xl overflow-hidden aspect-video">
-                <video ref={remoteRef} autoPlay playsInline className="w-full h-full object-cover" />
-              </div>
-            </div>
-          )}
+            )}
+          </AnimatePresence>
 
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Chat Area */}
-            <div className="flex-1 bg-[#111111] border border-[#27272a] rounded-3xl flex flex-col min-h-[480px]">
+            {/* Chat Window */}
+            <div className="flex-1 bg-zinc-900 border border-white/10 rounded-3xl flex flex-col min-h-[480px]">
               <div className="flex-1 p-8 overflow-y-auto space-y-6">
-                {messages.length === 0 && <div className="text-center text-[#71717a] mt-20">You're now chatting with {name}. Say hi!</div>}
-                {messages.map(m => (
-                  <div key={m.id} className={`flex ${m.isUser ? 'justify-end' : ''}`}>
-                    <div className={`max-w-[75%] px-6 py-4 rounded-3xl ${m.isUser ? 'bg-[#3b82f6]' : 'bg-[#1a1a1a]'}`}>
-                      {m.text}
-                    </div>
+                {messages.length === 0 && (
+                  <div className="text-center text-white/50 mt-20">You're now chatting with {name}. Say hi!</div>
+                )}
+                <AnimatePresence>
+                  {messages.map((msg, index) => (
+                    <motion.div 
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-[75%] px-6 py-4 rounded-3xl ${msg.isUser ? 'bg-white text-black' : 'bg-white/10'}`}>
+                        {msg.text}
+                        <div className="text-xs mt-2 opacity-60">{msg.timestamp}</div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-white/10 px-6 py-4 rounded-3xl">typing...</div>
                   </div>
-                ))}
-                {isTyping && <div className="text-[#71717a]">typing...</div>}
+                )}
               </div>
 
-              <div className="p-5 border-t border-[#27272a]">
+              {/* Input */}
+              <div className="p-5 border-t border-white/10">
                 <div className="flex gap-3">
-                  <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()}
-                    className="flex-1 bg-[#1a1a1a] border border-[#27272a] rounded-3xl px-6 py-4" placeholder="Type a message..." />
-                  <button onClick={send} className="bg-[#3b82f6] px-8 rounded-3xl">Send</button>
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-white/5 border border-white/10 rounded-3xl px-7 py-4 focus:outline-none"
+                  />
+                  <button onClick={sendMessage} className="bg-white text-black px-8 rounded-3xl font-medium">Send</button>
                 </div>
               </div>
             </div>
 
             {/* Controls */}
-            <div className="w-full md:w-80 bg-[#161616] border border-[#27272a] rounded-3xl p-6">
-              <button onClick={toggleVideo} className={`w-full py-4 rounded-3xl mb-3 ${videoOn ? 'bg-red-500' : 'bg-[#3b82f6]'}`}>
+            <div className="w-full md:w-80 bg-zinc-900 border border-white/10 rounded-3xl p-6 space-y-4">
+              <button onClick={toggleVideo} className={`w-full py-4 rounded-3xl font-medium ${videoOn ? 'bg-red-600' : 'bg-white text-black'}`}>
                 {videoOn ? 'Stop Video' : 'Enable Video + Mic'}
               </button>
-              <button onClick={toggleVoice} className={`w-full py-4 rounded-3xl ${voiceOn ? 'bg-red-500' : 'bg-[#27272a]'}`}>
+              <button onClick={toggleVoice} className={`w-full py-4 rounded-3xl font-medium ${voiceOn ? 'bg-red-600' : 'bg-white/10'}`}>
                 {voiceOn ? 'Stop Voice' : 'Voice Only'}
               </button>
             </div>
@@ -201,18 +257,30 @@ export default function Chat() {
       )}
 
       {/* Report Modal */}
-      {showReport && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-6">
-          <div className="bg-[#161616] p-8 rounded-3xl w-full max-w-md">
-            <h3 className="text-2xl mb-4">Report {name}</h3>
-            <textarea value={reportText} onChange={e=>setReportText(e.target.value)} className="w-full h-28 bg-[#1a1a1a] p-4 rounded-2xl" placeholder="Reason..." />
-            <div className="flex gap-4 mt-6">
-              <button onClick={()=>setShowReport(false)} className="flex-1 py-3 border border-[#27272a] rounded-3xl">Cancel</button>
-              <button onClick={()=>{alert("Report submitted"); setShowReport(false); end();}} className="flex-1 py-3 bg-[#3b82f6] rounded-3xl">Submit</button>
-            </div>
+      <AnimatePresence>
+        {showReport && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-50">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-zinc-900 border border-white/10 p-8 rounded-3xl w-full max-w-md"
+            >
+              <h3 className="text-3xl font-semibold mb-4">Report {name}</h3>
+              <textarea 
+                value={reportText} 
+                onChange={e => setReportText(e.target.value)} 
+                placeholder="Describe the issue..." 
+                className="w-full h-28 bg-black border border-white/20 rounded-2xl p-5" 
+              />
+              <div className="flex gap-4 mt-6">
+                <button onClick={() => setShowReport(false)} className="flex-1 py-4 border border-white/20 rounded-3xl">Cancel</button>
+                <button onClick={() => { alert("Report submitted"); setShowReport(false); endChat(); }} className="flex-1 py-4 bg-white text-black rounded-3xl">Submit</button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
