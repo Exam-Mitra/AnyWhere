@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 const INTERESTS = [
   'Gaming', 'Music', 'Tech', 'Movies', 'Travel', 
@@ -27,6 +27,8 @@ export default function ChatPage() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(false);
   const [isVoiceOnly, setIsVoiceOnly] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
   
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -171,6 +173,20 @@ export default function ChatPage() {
     window.location.href = '/';
   };
 
+  const blockUser = () => {
+    alert(`User ${strangerName} has been blocked. You won't be matched with them again.`);
+    endChat();
+  };
+
+  const submitReport = () => {
+    if (!reportReason.trim()) return;
+    
+    alert(`Thank you. Your report has been submitted.\nReason: ${reportReason}`);
+    setShowReportModal(false);
+    setReportReason('');
+    endChat();
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans flex flex-col">
       {/* Header */}
@@ -190,12 +206,30 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <button 
-          onClick={endChat}
-          className="text-sm px-4 py-2 rounded-full border border-[#27272a] hover:bg-[#1a1a1a] transition-colors"
-        >
-          End chat
-        </button>
+        <div className="flex items-center gap-3">
+          {step === 'chat' && (
+            <>
+              <button 
+                onClick={() => setShowReportModal(true)}
+                className="text-sm px-4 py-2 rounded-full border border-[#ef4444]/30 text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors"
+              >
+                Report
+              </button>
+              <button 
+                onClick={blockUser}
+                className="text-sm px-4 py-2 rounded-full border border-[#27272a] hover:bg-[#1a1a1a] transition-colors"
+              >
+                Block
+              </button>
+            </>
+          )}
+          <button 
+            onClick={endChat}
+            className="text-sm px-4 py-2 rounded-full border border-[#27272a] hover:bg-[#1a1a1a] transition-colors"
+          >
+            End chat
+          </button>
+        </div>
       </div>
 
       {/* INTEREST SELECTION */}
@@ -383,6 +417,42 @@ export default function ChatPage() {
               <div className="text-[10px] text-center text-[#52525b] pt-3 border-t border-[#27272a]">
                 WebRTC powered • Real-time
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="card w-full max-w-md p-8">
+            <h3 className="text-2xl font-semibold tracking-tight mb-2">Report {strangerName}</h3>
+            <p className="text-[#a1a1aa] mb-6">Help us keep the platform safe. Why are you reporting this user?</p>
+
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Describe the issue (harassment, inappropriate content, etc.)"
+              className="w-full h-28 bg-[#1a1a1a] border border-[#27272a] rounded-2xl p-4 text-sm resize-none focus:outline-none focus:border-[#ef4444]"
+            />
+
+            <div className="flex gap-3 mt-6">
+              <button 
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+                className="btn-secondary flex-1 py-3 rounded-2xl"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={submitReport}
+                disabled={!reportReason.trim()}
+                className="btn-primary flex-1 py-3 rounded-2xl disabled:opacity-50"
+              >
+                Submit Report
+              </button>
             </div>
           </div>
         </div>
