@@ -257,30 +257,36 @@ export default function PremiumChat() {
       )}
 
       {/* Report Modal */}
-      <AnimatePresence>
-        {showReport && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-50">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-zinc-900 border border-white/10 p-8 rounded-3xl w-full max-w-md"
-            >
-              <h3 className="text-3xl font-semibold mb-4">Report {name}</h3>
-              <textarea 
-                value={reportText} 
-                onChange={e => setReportText(e.target.value)} 
-                placeholder="Describe the issue..." 
-                className="w-full h-28 bg-black border border-white/20 rounded-2xl p-5" 
-              />
-              <div className="flex gap-4 mt-6">
-                <button onClick={() => setShowReport(false)} className="flex-1 py-4 border border-white/20 rounded-3xl">Cancel</button>
-                <button onClick={() => { alert("Report submitted"); setShowReport(false); endChat(); }} className="flex-1 py-4 bg-white text-black rounded-3xl">Submit</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+<AnimatePresence>
+  {showReport && (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-50">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-zinc-900 border border-white/10 p-8 rounded-3xl w-full max-w-md"
+      >
+        <h3 className="text-3xl font-semibold mb-4">Report {name}</h3>
+        <textarea 
+          value={reportText} 
+          onChange={e => setReportText(e.target.value)} 
+          placeholder="Describe the issue..." 
+          className="w-full h-28 bg-black border border-white/20 rounded-2xl p-5" 
+        />
+        <div className="flex gap-4 mt-6">
+          <button onClick={() => setShowReport(false)} className="flex-1 py-4 border border-white/20 rounded-3xl">Cancel</button>
+          <button 
+            onClick={() => { 
+              alert("Report submitted"); 
+              setShowReport(false); 
+              endChat(); 
+            }} 
+            className="flex-1 py-4 bg-white text-black rounded-3xl"
+          >
+            Submit
+          </button>
+        </div>
+      </motion.div>
     </div>
-  );
-}
+  )}
+</AnimatePresence>
