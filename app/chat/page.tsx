@@ -223,7 +223,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* CHAT + VIDEO INTERFACE */}
+      {/* CHAT INTERFACE */}
       {step === 'chat' && (
         <div className="flex-1 flex flex-col max-w-6xl mx-auto w-full p-6 gap-6">
           {/* Video Section */}
@@ -240,10 +240,10 @@ export default function ChatPage() {
             </div>
           )}
 
-          {/* Chat Window */}
           <div className="flex-1 flex flex-col md:flex-row gap-6">
+            {/* Chat Window */}
             <div className="flex-1 chat-window flex flex-col overflow-hidden min-h-[480px]">
-              <div className="flex-1 p-8 overflow-y-auto space-y-6 text-[15px]" id="messages">
+              <div className="flex-1 p-8 overflow-y-auto space-y-6 text-[15px]">
                 {messages.length === 0 && (
                   <div className="text-center text-[#71717a] mt-16">
                     You're now chatting with <span className="text-white">{strangerName}</span>.<br />Say hi!
@@ -270,7 +270,6 @@ export default function ChatPage() {
                 )}
               </div>
 
-              {/* Input */}
               <div className="border-t border-[#27272a] p-5 bg-[#111111]">
                 <div className="flex gap-3">
                   <input
@@ -286,7 +285,7 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Sidebar Controls */}
+            {/* Sidebar */}
             <div className="w-full md:w-80 card p-6 flex flex-col gap-4">
               <div className="text-sm text-[#a1a1aa] mb-1">Media</div>
               
@@ -298,7 +297,6 @@ export default function ChatPage() {
                 {isVoiceOnly ? 'Stop Voice' : 'Voice Only'}
               </button>
 
-              {/* Ad */}
               <div className="mt-auto pt-6 border-t border-[#27272a]">
                 <div className="bg-[#1a1a1a] border border-[#27272a] rounded-3xl p-5 text-center">
                   <div className="text-xs text-[#52525b]">SPONSORED</div>
